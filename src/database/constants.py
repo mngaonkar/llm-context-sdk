@@ -1,0 +1,4 @@
+EMBEDDING_MODEL = "all-MiniLM-L6-v2.gguf2.f16.gguf"
+NO_DOCS_PER_QUERY = 10
+DOCS_LOCATION = "docs"
+DEFAULT_CONFIF_FILE = "config.json"

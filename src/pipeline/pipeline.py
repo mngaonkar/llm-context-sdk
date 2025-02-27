@@ -5,10 +5,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.chat_history import BaseChatMessageHistory
 from zmq import Context
-from backend import llm_provider
-from backend.database import Database
-from backend.utils import pretty_print_docs
-from  constants import *
+from src.pipeline.utils import pretty_print_docs
+from src.pipeline.constants import *
 from loguru import logger
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.retrievers.document_compressors import FlashrankRerank
@@ -16,8 +14,8 @@ from langchain.retrievers import ContextualCompressionRetriever
 
 from langchain.retrievers.document_compressors.cross_encoder_rerank import CrossEncoderReranker
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
-from backend.vectorstore import VectorStore
-from backend.llm_provider import LLMOllama, LLMLlamaCpp
+from src.database.vectorstore import VectorStore
+from src.provider.llm_provider import LLMOllama, LLMLlamaCpp
 
 
 class Pipeline():
