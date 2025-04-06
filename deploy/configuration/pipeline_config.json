@@ -1,0 +1,7 @@
+{
+    "config_type": "pipeline",
+    "pipeline_name": "default",
+    "provider_name": "ollama",
+    "augmented_flag": false,
+    "dataset": null
+}
