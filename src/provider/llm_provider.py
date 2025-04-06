@@ -32,10 +32,18 @@ class LLMProvider(ABC):
         pass
 
     @staticmethod
-    def instantiate(provider_config):
+    def instantiate(provider_type, llm_config):
         """Create LLM provider."""
-        if provider_config.type == LLProviderType.OLLAMA:
-            return LLMOllama(provider_config.base_url, provider_config.model)
+        if provider_type == LLMProviderType.OLLAMA.value:
+            llm_provider = LLMOllama(base_url=llm_config["base_url"], model=llm_config["model"])
+        elif provider_type == LLMProviderType.LLAMA_CPP.value:
+            llm_provider = LLMLlamaCpp(base_url=llm_config["base_url"], model=llm_config["model"])
+        elif provider_type == LLMProviderType.OPENAI.value:
+            llm_provider = LLMOpenAI(base_url=llm_config["base_url"], model=llm_config["model"])
+        else:
+            raise ValueError(f"Unsupported LLM provider type: {provider_type}")
+        
+        return llm_provider
     
 
 class LLMOllama(LLMProvider):

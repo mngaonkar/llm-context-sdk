@@ -6,8 +6,8 @@ import json
 
 class TestLLMProviderConfig(unittest.TestCase):
     """Test class for LLMProviderConfig."""
-    CONFIG_DB_PATH = "./deploy/provider_config"
-    CONFIG_DB_NAME = "llm_providers_config.db"
+    CONFIG_DB_PATH = "./deploy/configuration"
+    CONFIG_DB_NAME = "config.db"
 
     def setUp(self):
         return super().setUp()
