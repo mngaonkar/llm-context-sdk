@@ -1,4 +1,4 @@
 LLM_PROVIDER_OLLAMA = "ollama"
-MODEL_NAME = "deepseek-r1"
+MODEL_NAME = "llava"
 INFERENCE_URL_OLLAMA = "http://localhost:11434"
 MAX_CHAT_HISTORY = 5

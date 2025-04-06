@@ -15,8 +15,13 @@ from langchain.retrievers import ContextualCompressionRetriever
 from langchain.retrievers.document_compressors.cross_encoder_rerank import CrossEncoderReranker
 from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from src.database.vectorstore import VectorStore
-from src.provider.llm_provider import LLMOllama, LLMLlamaCpp
+from src.provider.llm_provider import LLMProvider
+from src.provider.constants import LLMProviderType
+from src.provider.llm_provider_config import LLMProviderConfig
+from src.pipeline.pipeline_config import PipelineConfig
+from src.database.loader import DocumentLoader
 
+CONFIG_DB = "deploy/configuration/config.db"
 
 class Pipeline():
     """Pipeline class for processing data"""
@@ -32,34 +37,46 @@ class Pipeline():
         self.session_state = session_state
 
     def setup_prompt_tepmlate(self, template=None):
-        self.prompt = PromptTemplate(
-        template="""
-        <|begin_of_text|>
-        <|start_header_id|>system<|end_header_id|>
-        {history}
-        <|eot_id|>
-        <|start_header_id|>user<|end_header_id|>
-        {context}
-        {question}
-        <|eot_id|>
-        <|start_header_id|>assistant<|end_header_id|>
-        """,
-        input_variables=["history", "context", "question"],
-        )
+        """Setup the prompt template."""
 
-    def setup_large_language_model_provider(self, model = MODEL_NAME, base_url = INFERENCE_URL_OLLAMA):
+        if template is None: # default template
+            self.prompt = PromptTemplate(
+            template="""
+            <|begin_of_text|>
+            <|start_header_id|>system<|end_header_id|>
+            {history}
+            <|eot_id|>
+            <|start_header_id|>user<|end_header_id|>
+            {context}
+            {question}
+            <|eot_id|>
+            <|start_header_id|>assistant<|end_header_id|>
+            """,
+            input_variables=["history", "context", "question"],
+            )
+        else:
+            self.prompt = template
+
+    def setup_llm_provider(self, provider_type = LLMProviderType.OLLAMA.value):
         logger.debug(f"session state = {self.session_state}")
-        logger.info(f"Setting up LLM provider with model {model} and base url {base_url}")
-        self.llm_provider = LLMOllama(base_url=base_url, model=model)
-        # self.llm = LLMLlamaCpp(base_url=constants.INFERENCE_URL_LLAMA_CPP_LOCAL)
+        logger.info(f"Setting up LLM provider with provider {provider_type}")
 
-    def setup(self, vector_store: VectorStore):
+        config = LLMProviderConfig(CONFIG_DB)
+        llm_config = config.get_llm_provider_config(provider_type)
+
+        self.llm_provider = LLMProvider.instantiate(provider_type, llm_config)
+
+    def setup(self):
         """Overall setup."""
-        self.setup_prompt_tepmlate()
-        self.setup_large_language_model_provider(self.session_state["model"], INFERENCE_URL_OLLAMA)
-        self.vector_store = vector_store
-        if self.session_state.get("augmented_flag"):
-            self.vector_store.init_vectorstore(self.session_state["dataset"])
+        self.pipeline_config = PipelineConfig(CONFIG_DB).get_pipeline_config("default")
+        self.llm_config = LLMProviderConfig(CONFIG_DB).get_llm_provider_config(self.pipeline_config["provider_name"])
+
+        self.setup_llm_provider(self.llm_config["provider_name"])
+        self.setup_prompt_tepmlate(self.llm_config["prompt_template"])
+        document_loader = DocumentLoader()
+        self.vector_store = VectorStore(document_loader)
+        if self.pipeline_config.get("augmented_flag"):
+            self.vector_store.init_vectorstore(self.pipeline_config["dataset"])
         self.setup_chain()
         logger.info("Pipeline setup complete.")
     
