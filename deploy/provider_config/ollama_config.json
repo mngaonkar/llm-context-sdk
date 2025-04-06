@@ -1,0 +1,7 @@
+{
+            "config_type": "llm_provider",
+            "provider_name": "ollama",
+            "model": "llava",
+            "base_url": "http://localhost:11434",
+            "temperature": 0.6
+}
