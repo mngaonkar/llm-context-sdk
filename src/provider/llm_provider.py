@@ -3,6 +3,7 @@ from loguru import logger
 from langchain_community.chat_models import ChatOllama
 from langchain_community.llms import LlamaCpp
 from langchain_openai import ChatOpenAI
+from src.provider.constants import LLMProviderType
 import ollama
 
 DEFAULT_TEMPERATURE = 0.6
@@ -29,12 +30,19 @@ class LLMProvider(ABC):
     def get_models_list(self):
         """Get the list of models."""
         pass
+
+    @staticmethod
+    def instantiate(provider_config):
+        """Create LLM provider."""
+        if provider_config.type == LLProviderType.OLLAMA:
+            return LLMOllama(provider_config.base_url, provider_config.model)
     
 
 class LLMOllama(LLMProvider):
     """The Ollama LLM model."""
     def __init__(self, base_url="http://localhost:11434", model=None, temperature=DEFAULT_TEMPERATURE):
         """Initialize the LLM model."""
+        self.type = LLProviderType.OLLAMA
         self.base_url = base_url
         models_list = self.get_models_list()
         if model is None:
@@ -67,4 +75,12 @@ class LLMLlamaCpp(LLMProvider):
     """The Llama.cpp LLM model."""
     def __init__(self, base_url="http://localhost:8080"):
         """Initialize the LLM model."""
+        self.type = LLProviderType.LLAMA_CPP
+        self.llm = ChatOpenAI(base_url=base_url, temperature=0.6, api_key=None)
+
+class LLMOpenAI(LLMProvider):
+    """The Llama.cpp LLM model."""
+    def __init__(self, base_url="http://localhost:8080"):
+        """Initialize the LLM model."""
+        self.type = LLProviderType.OPENAI
         self.llm = ChatOpenAI(base_url=base_url, temperature=0.6, api_key=None)

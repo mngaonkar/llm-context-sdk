@@ -1,0 +1,20 @@
+{
+    "llm_providers":
+    {
+        "ollama": {
+            "model": null,
+            "base_url": null,
+            "temperature": null
+        },
+        "llama_cpp": {
+            "model": null,
+            "base_url": null,
+            "temperature": null
+        },
+        "openai": {
+            "model": null,
+            "base_url": null,
+            "temperature": null
+        }
+    }
+}
