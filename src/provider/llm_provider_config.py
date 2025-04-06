@@ -53,15 +53,10 @@ class LLMProviderConfig():
         """Delete a configuration from the database."""
         q = Query()
         self.db.remove(q[LLMProviderConfig.PROVIDER_NAME_KEY] == provider_name \
-                       & q[LLMProviderConfig.CONFIG_TYPE_KEY] == "provider")
+                       & q[LLMProviderConfig.CONFIG_TYPE_KEY] == LLMProviderConfig.CONFIG_TYPE_VALUE)
         logger.info(f"Deleted LLM provider config for {provider_name}.")
 
     def delete_all_llm_provider_config(self):
         """Delete all configurations from the database."""
-        self.db.remove(q[LLMProviderConfig.CONFIG_TYPE_KEY] == "provider")
+        self.db.remove(q[LLMProviderConfig.CONFIG_TYPE_KEY] == LLMProviderConfig.CONFIG_TYPE_VALUE)
         logger.info("Deleted all LLM provider configs.")
-
-    def delete_all_llm_providers(self):
-        """Clear the database."""
-        self.db.truncate()
-        logger.info("Cleared the database.")
