@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from webserver.constants import *
+from src.webserver.constants import *
 from pydantic import BaseModel
-from provider.llm_provider import LLMOllama
+from src.provider.llm_provider import LLMOllama
+from src.pipeline.pipeline import Pipeline
 
 class RequestPayload(BaseModel):
     model: str
@@ -9,11 +10,14 @@ class RequestPayload(BaseModel):
     images: list[str]
     stream: bool = False
 
+# Initialize the FastAPI app
 app = FastAPI(
     title="LLM inference API",
     description="API for LLM inference",
     version="0.1",
 )
+# Initialize the pipeline
+pipeline = Pipeline()
 
 @app.get("/")
 def read_root():
@@ -28,4 +32,4 @@ def generate_response(request: RequestPayload):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("src.webserver.server:app", host="0.0.0.0", port=8000, reload=True)
