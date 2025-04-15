@@ -40,7 +40,7 @@ class Pipeline():
         """User specific session data"""
         self.session_state = session_state
 
-    def setup_prompt_tepmlate(self, template=None):
+    def setup_prompt_tepmlate(self, template=None, input_variables=None):
         """Setup the prompt template."""
 
         if template is None: # default template
@@ -59,7 +59,8 @@ class Pipeline():
             input_variables=["history", "context", "question"],
             )
         else:
-            self.prompt = PromptTemplate(template=template)
+            self.prompt = PromptTemplate(template=template, 
+                                         input_variables=input_variables)
 
     def setup_llm_provider(self, provider_type = LLMProviderType.OLLAMA.value):
         logger.debug(f"session state = {self.session_state}")
@@ -78,7 +79,7 @@ class Pipeline():
         self.llm_config = LLMProviderConfig(CONFIG_DB).get_llm_provider_config(self.pipeline_config["provider_name"])[0]
 
         self.setup_llm_provider(self.llm_config["provider_name"])
-        self.setup_prompt_tepmlate(self.llm_config["template"])
+        self.setup_prompt_tepmlate(self.llm_config["template"], self.llm_config["input_variables"])
         document_loader = DocumentLoader(config=None)
         self.vector_store = VectorStore(document_loader, config=None)
         if self.pipeline_config.get("augmented_flag"):

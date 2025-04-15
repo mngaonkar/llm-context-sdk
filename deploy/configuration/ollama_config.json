@@ -4,5 +4,10 @@
             "model": "llava",
             "base_url": "http://localhost:11434",
             "temperature": 0.6,
-            "template": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>{history}<|eot_id|><|start_header_id|>user<|end_header_id|>{context}{question}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"
+            "template": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>{history}<|eot_id|><|start_header_id|>user<|end_header_id|>{context}{question}<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+            "input_variables": [
+                "history",
+                "context",
+                "question"
+            ]
 }

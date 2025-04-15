@@ -37,9 +37,9 @@ def read_root():
 @app.post("/api/generate")
 def generate_response(request: RequestPayload):
     """Generate a response from the LLM model."""
-    provider = LLMOllama("http://127.0.0.1:11434", model=request.model)
+    # provider = LLMOllama("http://127.0.0.1:11434", model=request.model)
     
-    response = provider.generate_response(request.prompt)
+    response = pipeline.generate_response(request.prompt)
     return {"response": response}
 
 if __name__ == "__main__":
