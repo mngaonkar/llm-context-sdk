@@ -14,7 +14,7 @@ class LLMProvider(ABC):
         """Initialize the default LLM model."""
         self.llm = ChatOpenAI(base_url=base_url, temperature=0.6, api_key=None)
 
-    def generate_response(self, model, prompt, images=None):
+    def generate_response(self, prompt, images=None):
         text = ""
         """Generate a response from the LLM model."""
         for chunk in self.llm.stream(prompt):
@@ -50,14 +50,14 @@ class LLMOllama(LLMProvider):
     """The Ollama LLM model."""
     def __init__(self, base_url="http://localhost:11434", model=None, temperature=DEFAULT_TEMPERATURE):
         """Initialize the LLM model."""
-        self.type = LLProviderType.OLLAMA
+        self.type = LLMProviderType.OLLAMA
         self.base_url = base_url
         models_list = self.get_models_list()
         if model is None:
             logger.info(f"Setting up default model {models_list[0]}")
             self.llm = ChatOllama(model=models_list[0], base_url=base_url, temperature=temperature)   
         else:
-            logger.info(f"Setting up model from session state {model}")
+            logger.info(f"Setting up model from session state for model {model}")
             self.llm = ChatOllama(model=model, base_url=base_url, temperature=temperature)
 
     def set_model(self, model):

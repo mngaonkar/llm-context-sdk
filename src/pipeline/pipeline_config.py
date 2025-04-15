@@ -44,7 +44,7 @@ class PipelineConfig():
     def get_pipeline_config(self, pipeline_name):
         """Get a configuration from the database."""
         q = Query()
-        result = self.db.search((q[PipelineConfig.PROVIDER_NAME_KEY] == pipeline_name) \
+        result = self.db.search((q[PipelineConfig.PIPELINE_NAME_KEY] == pipeline_name) \
                                 & (q[PipelineConfig.CONFIG_TYPE_KEY] == PipelineConfig.CONFIG_TYPE_VALUE))
         logger.info(f"Retrieved pipeline config for {pipeline_name}: {result}")
         return result if len(result) > 0 else None
@@ -52,7 +52,7 @@ class PipelineConfig():
     def delete_pipeline_config(self, pipeline_name):
         """Delete a configuration from the database."""
         q = Query()
-        self.db.remove(q[PipelineConfig.PROVIDER_NAME_KEY] == pipeline_name \
+        self.db.remove(q[PipelineConfig.PIPELINE_NAME_KEY] == pipeline_name \
                        & q[PipelineConfig.CONFIG_TYPE_KEY] == PipelineConfig.CONFIG_TYPE_VALUE)
         logger.info(f"Deleted pipeline config for {pipeline_name}.")
 

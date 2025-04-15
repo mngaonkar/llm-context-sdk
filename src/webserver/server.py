@@ -3,6 +3,7 @@ from src.webserver.constants import *
 from pydantic import BaseModel
 from src.provider.llm_provider import LLMOllama
 from src.pipeline.pipeline import Pipeline
+from src.configuration.configdb import ConfigDB
 
 class RequestPayload(BaseModel):
     model: str
@@ -16,8 +17,18 @@ app = FastAPI(
     description="API for LLM inference",
     version="0.1",
 )
+
+# Setup config DB. TODO: refactor, read from file and configure
+CONFIG_DB_PATH = "./deploy/configuration"
+CONFIG_DB_NAME = "config.db"
+CONFIG_FILES = ["dataset_config.json", "pipeline_config.json", "ollama_config.json"]
+
+db = ConfigDB()
+db.setup(CONFIG_DB_PATH, CONFIG_DB_NAME, CONFIG_FILES)
+
 # Initialize the pipeline
 pipeline = Pipeline()
+pipeline.setup()
 
 @app.get("/")
 def read_root():
@@ -26,7 +37,8 @@ def read_root():
 @app.post("/api/generate")
 def generate_response(request: RequestPayload):
     """Generate a response from the LLM model."""
-    provider = LLMOllama("http://127.0.0.1:11434", model=request.model, images=request.images)
+    provider = LLMOllama("http://127.0.0.1:11434", model=request.model)
+    
     response = provider.generate_response(request.prompt)
     return {"response": response}
 

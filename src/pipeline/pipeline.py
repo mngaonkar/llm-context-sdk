@@ -7,7 +7,7 @@ from langchain_core.chat_history import BaseChatMessageHistory
 from zmq import Context
 from src.pipeline.utils import pretty_print_docs
 from src.pipeline.constants import *
-from loguru import logger
+import logging
 from langchain.callbacks.tracers import ConsoleCallbackHandler
 from langchain.retrievers.document_compressors import FlashrankRerank
 from langchain.retrievers import ContextualCompressionRetriever
@@ -21,6 +21,9 @@ from src.provider.llm_provider_config import LLMProviderConfig
 from src.pipeline.pipeline_config import PipelineConfig
 from src.database.loader import DocumentLoader
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
 CONFIG_DB = "deploy/configuration/config.db"
 
 class Pipeline():
@@ -31,6 +34,7 @@ class Pipeline():
         """Set default values."""
         self.llm_provider_name = LLM_PROVIDER_OLLAMA
         self.retriever = None
+        self.session_state = None
         
     def setup_session_state(self, session_state = {}):
         """User specific session data"""
@@ -55,26 +59,28 @@ class Pipeline():
             input_variables=["history", "context", "question"],
             )
         else:
-            self.prompt = template
+            self.prompt = PromptTemplate(template=template)
 
     def setup_llm_provider(self, provider_type = LLMProviderType.OLLAMA.value):
         logger.debug(f"session state = {self.session_state}")
         logger.info(f"Setting up LLM provider with provider {provider_type}")
 
         config = LLMProviderConfig(CONFIG_DB)
-        llm_config = config.get_llm_provider_config(provider_type)
+        llm_config = config.get_llm_provider_config(provider_type)[0]
 
         self.llm_provider = LLMProvider.instantiate(provider_type, llm_config)
 
     def setup(self):
         """Overall setup."""
-        self.pipeline_config = PipelineConfig(CONFIG_DB).get_pipeline_config("default")
-        self.llm_config = LLMProviderConfig(CONFIG_DB).get_llm_provider_config(self.pipeline_config["provider_name"])
+        logger.info("Setting up pipeline...")
+        self.pipeline_config = PipelineConfig(CONFIG_DB).get_pipeline_config("default")[0]
+        logger.debug(f"pipeline config = {self.pipeline_config}")
+        self.llm_config = LLMProviderConfig(CONFIG_DB).get_llm_provider_config(self.pipeline_config["provider_name"])[0]
 
         self.setup_llm_provider(self.llm_config["provider_name"])
-        self.setup_prompt_tepmlate(self.llm_config["prompt_template"])
-        document_loader = DocumentLoader()
-        self.vector_store = VectorStore(document_loader)
+        self.setup_prompt_tepmlate(self.llm_config["template"])
+        document_loader = DocumentLoader(config=None)
+        self.vector_store = VectorStore(document_loader, config=None)
         if self.pipeline_config.get("augmented_flag"):
             self.vector_store.init_vectorstore(self.pipeline_config["dataset"])
         self.setup_chain()
@@ -85,7 +91,7 @@ class Pipeline():
         if self.vector_store is None:
             raise ValueError("Vector store not initialized.")
         
-        if self.session_state.get("augmented_flag"):
+        if self.pipeline_config.get("augmented_flag"):
             self.retriever = self.vector_store.database.vector_db.as_retriever()
 
         def format_docs(docs):
@@ -130,7 +136,7 @@ class Pipeline():
             return format_docs(doc_list)
             
         # build the pipeline
-        if "augmented_flag" in self.session_state and self.session_state["augmented_flag"]:
+        if self.pipeline_config.get("augmented_flag"):
             self.rag_chain = (
                 {"history":self.get_session_history, "context": get_context, "question": RunnablePassthrough()}
                 | self.prompt
