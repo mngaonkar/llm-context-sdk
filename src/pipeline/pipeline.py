@@ -20,6 +20,7 @@ from src.provider.constants import LLMProviderType
 from src.provider.llm_provider_config import LLMProviderConfig
 from src.pipeline.pipeline_config import PipelineConfig
 from src.database.loader import DocumentLoader
+from src.session.session import Session
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -35,6 +36,7 @@ class Pipeline():
         self.llm_provider_name = LLM_PROVIDER_OLLAMA
         self.retriever = None
         self.session_state = None
+        self.session_list = {}
         
     def setup_session_state(self, session_state = {}):
         """User specific session data"""
@@ -120,11 +122,11 @@ class Pipeline():
             pretty_print_docs(compressed_docs)
             return format_docs(compressed_docs)
         
-        def get_no_context(prompt):
+        def get_no_context(prompt, input=None, config=None):
             """Return no context."""
             return ""
         
-        def get_context(prompt):
+        def get_context(prompt, input=None, config=None):
             """Get the context of the conversation."""
             doc_list = []
             if self.vector_store is not None:
@@ -139,7 +141,11 @@ class Pipeline():
         # build the pipeline
         if self.pipeline_config.get("augmented_flag"):
             self.rag_chain = (
-                {"history":self.get_session_history, "context": get_context, "question": RunnablePassthrough()}
+                {
+                    "history":self.get_session_history, 
+                    "context": get_context, 
+                    "question": RunnablePassthrough()
+                }
                 | self.prompt
                 | self.llm_provider.llm
                 | StrOutputParser()
@@ -155,12 +161,22 @@ class Pipeline():
     def setup_vector_store(self, store: VectorStore):
             self.vector_store = store
 
-    def generate_response(self, query):
+    def generate_response(self, query:str, session_id:str):
         """Generate a response from the LLM model."""
-        response = self.rag_chain.invoke(query,
+        response = self.rag_chain.invoke(input=query,
                                          config={
-                                             "configurable": {'session_id': '1234'}, 
+                                             'callbacks': [ConsoleCallbackHandler()],
+                                             'configurable': {
+                                                 'session_id': session_id
+                                             }
                                          })
+
+        if session_id not in self.session_list:
+            self.session_list[session_id] = Session()
+            logger.info(f"Creating new session with id {session_id}")
+
+        self.session_list[session_id].add_message(role="user", content=query)
+        self.session_list[session_id].add_message(role="agent", content=response)
 
         return response
     
@@ -171,9 +187,17 @@ class Pipeline():
             yield chunk
 
     
-    def get_session_history(self, prompt):
-        logger.info(f"length of chat history: {len(self.chat_history)}")
-        if len(self.chat_history) > MAX_CHAT_HISTORY:
-            logger.info("chat history is greater than max chat history, truncating...")
-            self.chat_history = self.chat_history[-MAX_CHAT_HISTORY:]
-        return " ".join(self.chat_history)
+    def get_session_history(self, input=None, config=None):
+        """Get the session history."""
+        session_id = config.get("configurable", {}).get("session_id", None)
+        if session_id is None:
+            logger.info("Session ID not provided")
+            return ""
+        
+        if self.session_list.get(session_id) is None:
+            logger.info(f"Session {session_id} not found")
+            return ""
+    
+        session_history = self.session_list[session_id].get_chat_history_as_string()
+        logger.info(f"Session history for {session_id}: {session_history}")
+        return session_history

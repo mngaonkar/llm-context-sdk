@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from src.webserver.constants import *
 from pydantic import BaseModel
-from src.provider.llm_provider import LLMOllama
 from src.pipeline.pipeline import Pipeline
 from src.configuration.configdb import ConfigDB
 
@@ -9,7 +8,7 @@ class RequestPayload(BaseModel):
     model: str
     prompt: str
     images: list[str]
-    stream: bool = False
+    session_id: str
 
 # Initialize the FastAPI app
 app = FastAPI(
@@ -36,10 +35,8 @@ def read_root():
 
 @app.post("/api/generate")
 def generate_response(request: RequestPayload):
-    """Generate a response from the LLM model."""
-    # provider = LLMOllama("http://127.0.0.1:11434", model=request.model)
-    
-    response = pipeline.generate_response(request.prompt)
+    """Generate a response from the LLM model."""    
+    response = pipeline.generate_response(request.prompt, request.session_id)
     return {"response": response}
 
 if __name__ == "__main__":
