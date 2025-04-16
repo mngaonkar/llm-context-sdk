@@ -164,9 +164,14 @@ class Pipeline():
 
     def generate_response(self, query:str, images:list[str], session_id:str):
         """Generate a response from the LLM model."""
+        if len(images) == 0:
+            image_data = ""
+        else:
+            image_data = images[0]
+
         message = HumanMessage(content=[
             {"type": "text", "text": query},
-            {"type": "image_url", "image_url": f"data:image/png;base64,{images[0]}"},
+            {"type": "image_url", "image_url": f"data:image/png;base64,{image_data}"},
         ])
         response = self.rag_chain.invoke(input=message,
                                          config={
