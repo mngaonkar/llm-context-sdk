@@ -21,6 +21,7 @@ from src.provider.llm_provider_config import LLMProviderConfig
 from src.pipeline.pipeline_config import PipelineConfig
 from src.database.loader import DocumentLoader
 from src.session.session import Session
+from langchain_core.messages import HumanMessage
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -161,9 +162,13 @@ class Pipeline():
     def setup_vector_store(self, store: VectorStore):
             self.vector_store = store
 
-    def generate_response(self, query:str, session_id:str):
+    def generate_response(self, query:str, images:list[str], session_id:str):
         """Generate a response from the LLM model."""
-        response = self.rag_chain.invoke(input=query,
+        message = HumanMessage(content=[
+            {"type": "text", "text": query},
+            {"type": "image_url", "image_url": f"data:image/png;base64,{images[0]}"},
+        ])
+        response = self.rag_chain.invoke(input=message,
                                          config={
                                              'callbacks': [ConsoleCallbackHandler()],
                                              'configurable': {

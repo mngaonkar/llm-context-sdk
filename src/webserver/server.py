@@ -3,6 +3,10 @@ from src.webserver.constants import *
 from pydantic import BaseModel
 from src.pipeline.pipeline import Pipeline
 from src.configuration.configdb import ConfigDB
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class RequestPayload(BaseModel):
     model: str
@@ -35,8 +39,9 @@ def read_root():
 
 @app.post("/api/generate")
 def generate_response(request: RequestPayload):
-    """Generate a response from the LLM model."""    
-    response = pipeline.generate_response(request.prompt, request.session_id)
+    """Generate a response from the LLM model."""
+    logging.info(f"Received request: {request}")    
+    response = pipeline.generate_response(request.prompt, request.images, request.session_id)
     return {"response": response}
 
 if __name__ == "__main__":
