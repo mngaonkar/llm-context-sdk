@@ -9,7 +9,7 @@ class Session():
     def __init__(self):
         self.chat_history = []
         self.session_id = None
-        self.max_chat_history = 50
+        self.max_chat_history = 0
 
     def add_message(self, role: str, content: str):
         """Add a message to the chat history."""

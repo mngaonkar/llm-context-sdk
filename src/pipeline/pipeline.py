@@ -22,6 +22,7 @@ from src.pipeline.pipeline_config import PipelineConfig
 from src.database.loader import DocumentLoader
 from src.session.session import Session
 from langchain_core.messages import HumanMessage
+from langchain.schema.runnable import RunnableMap
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -139,22 +140,35 @@ class Pipeline():
                 pretty_print_docs(doc_list)
             return format_docs(doc_list)
             
+        def prompt_func(data: dict):
+            text = data["text"]
+            image = data.get("image", None)
+
+            image_part = {
+                "type": "image_url",
+                "image_url": f"data:image/jpeg;base64,{image}",
+            }
+
+            content_parts = []
+
+            text_part = {"type": "text", "text": text}
+
+            if image is not None:
+                content_parts.append(image_part)
+            content_parts.append(text_part)
+
+            return [HumanMessage(content=content_parts)]
+    
         # build the pipeline
         if self.pipeline_config.get("augmented_flag"):
             self.rag_chain = (
-                {
-                    "history":self.get_session_history, 
-                    "context": get_context, 
-                    "question": RunnablePassthrough()
-                }
-                | self.prompt
+                prompt_func
                 | self.llm_provider.llm
                 | StrOutputParser()
             )
         else:
             self.rag_chain = (
-                {"history":self.get_session_history, "context": get_no_context, "question": RunnablePassthrough()}
-                | self.prompt
+                prompt_func
                 | self.llm_provider.llm
                 | StrOutputParser()
             )
@@ -169,10 +183,27 @@ class Pipeline():
         else:
             image_data = images[0]
 
-        message = HumanMessage(content=[
-            {"type": "text", "text": query},
-            {"type": "image_url", "image_url": f"data:image/png;base64,{image_data}"},
-        ])
+        # message = {
+        #     "prompt": query,
+        #     "images": [image_data],
+        # }
+
+        # message = HumanMessage(
+        # content=[
+        #     {"type": "text", "text": "Describe what's in the image."},
+        #     {"type": "image", "image": image_data}
+        # ]
+        # )
+        
+        # message = f"You are a helpful assistant.  Here's an image: {image_data}.  What's in the image?"
+
+        
+
+        if image_data != "":
+            message = {"text": "What's in the image?", "image": image_data}
+        else:
+            message = {"text": query}
+
         response = self.rag_chain.invoke(input=message,
                                          config={
                                              'callbacks': [ConsoleCallbackHandler()],
@@ -185,8 +216,8 @@ class Pipeline():
             self.session_list[session_id] = Session()
             logger.info(f"Creating new session with id {session_id}")
 
-        self.session_list[session_id].add_message(role="user", content=query)
-        self.session_list[session_id].add_message(role="agent", content=response)
+        # self.session_list[session_id].add_message(role="user", content=query)
+        # self.session_list[session_id].add_message(role="agent", content=response)
 
         return response
     
