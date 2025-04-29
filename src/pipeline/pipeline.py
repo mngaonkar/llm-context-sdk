@@ -151,7 +151,7 @@ class Pipeline():
 
             content_parts = []
 
-            text_part = {"type": "text", "text": text}
+            text_part = {"type": "text", "text": data["context"] + " " + text}
 
             if image is not None:
                 content_parts.append(image_part)
@@ -200,9 +200,14 @@ class Pipeline():
         
 
         if image_data != "":
-            message = {"text": "What's in the image?", "image": image_data}
+            message = {"text": "What's in the image?", "image": image_data, "context": ""}
         else:
-            message = {"text": query}
+            session = self.session_list.get(session_id)
+            if session is not None:
+                context = session.get_chat_history_as_string()
+            else:
+                context = ""
+            message = {"text": query, "context": context}
 
         response = self.rag_chain.invoke(input=message,
                                          config={
@@ -216,8 +221,8 @@ class Pipeline():
             self.session_list[session_id] = Session()
             logger.info(f"Creating new session with id {session_id}")
 
-        # self.session_list[session_id].add_message(role="user", content=query)
-        # self.session_list[session_id].add_message(role="agent", content=response)
+        self.session_list[session_id].add_message(role="user", content=query)
+        self.session_list[session_id].add_message(role="agent", content=response)
 
         return response
     
