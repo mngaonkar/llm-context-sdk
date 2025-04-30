@@ -10,6 +10,9 @@ import os
 from loguru import logger
 from src.database.configuration import Configuration
 
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 100
+
 class DocumentLoader():
     """Storer class for storing data."""
     def __init__(self, config: Configuration):
@@ -19,8 +22,8 @@ class DocumentLoader():
         """Load a document from a URL."""
         loader = WebBaseLoader(url)
         document = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=constants.CHUNK_SIZE, 
-                                                       chunk_overlap=constants.CHUNK_OVERLAP)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, 
+                                                       chunk_overlap=CHUNK_OVERLAP)
         docs = text_splitter.split_documents(document)
 
         return docs
@@ -30,8 +33,8 @@ class DocumentLoader():
         logger.info(f"Loading document from {pdf_location}")
         loader = PyPDFLoader(pdf_location)
         document = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=constants.CHUNK_SIZE, 
-                                                       chunk_overlap=constants.CHUNK_OVERLAP)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, 
+                                                       chunk_overlap=CHUNK_OVERLAP)
         docs = text_splitter.split_documents(document)
 
         return docs
@@ -47,8 +50,8 @@ class DocumentLoader():
                 if file.endswith("." + file_type):
                     file_names.append(os.path.join(root, file))
 
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=constants.CHUNK_SIZE, 
-                                                        chunk_overlap=constants.CHUNK_OVERLAP)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, 
+                                                        chunk_overlap=CHUNK_OVERLAP)
         docs_content = []
 
         for file in file_names:

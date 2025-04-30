@@ -1,5 +1,6 @@
 {
     "config_type": "dataset",
     "dataset_name": "test_dataset",
-    "dataset_path": "./data/test_dataset.json"
+    "dataset_path": "./deploy/datasets",
+    "status": 1
 }

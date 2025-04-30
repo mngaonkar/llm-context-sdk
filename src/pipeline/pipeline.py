@@ -19,6 +19,7 @@ from src.provider.llm_provider import LLMProvider
 from src.provider.constants import LLMProviderType
 from src.provider.llm_provider_config import LLMProviderConfig
 from src.pipeline.pipeline_config import PipelineConfig
+from src.database.dataset_config import DatasetConfig
 from src.database.loader import DocumentLoader
 from src.session.session import Session
 from langchain_core.messages import HumanMessage
@@ -87,7 +88,8 @@ class Pipeline():
         document_loader = DocumentLoader(config=None)
         self.vector_store = VectorStore(document_loader, config=None)
         if self.pipeline_config.get("augmented_flag"):
-            self.vector_store.init_vectorstore(self.pipeline_config["dataset"])
+            self.dataset_config = DatasetConfig(CONFIG_DB).get_dataset_config(self.pipeline_config["dataset"])[0]
+            self.vector_store.init_vectorstore(self.dataset_config)
         self.setup_chain()
         logger.info("Pipeline setup complete.")
     
@@ -128,7 +130,7 @@ class Pipeline():
             """Return no context."""
             return ""
         
-        def get_context(prompt, input=None, config=None):
+        def get_context(prompt):
             """Get the context of the conversation."""
             doc_list = []
             if self.vector_store is not None:
@@ -149,9 +151,10 @@ class Pipeline():
                 "image_url": f"data:image/jpeg;base64,{image}",
             }
 
+            context = get_context(data["text"])
             content_parts = []
 
-            text_part = {"type": "text", "text": data["context"] + " " + text}
+            text_part = {"type": "text", "text": data["history"] + " " + context + " " + text}
 
             if image is not None:
                 content_parts.append(image_part)
@@ -200,14 +203,14 @@ class Pipeline():
         
 
         if image_data != "":
-            message = {"text": "What's in the image?", "image": image_data, "context": ""}
+            message = {"text": "What's in the image?", "image": image_data, "history": ""}
         else:
             session = self.session_list.get(session_id)
             if session is not None:
-                context = session.get_chat_history_as_string()
+                history = session.get_chat_history_as_string()
             else:
-                context = ""
-            message = {"text": query, "context": context}
+                history = ""
+            message = {"text": query, "history": history}
 
         response = self.rag_chain.invoke(input=message,
                                          config={

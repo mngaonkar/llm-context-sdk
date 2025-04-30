@@ -2,6 +2,6 @@
     "config_type": "pipeline",
     "pipeline_name": "default",
     "provider_name": "ollama",
-    "augmented_flag": false,
+    "augmented_flag": true,
     "dataset": "test_dataset"
 }
