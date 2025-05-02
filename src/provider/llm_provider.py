@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 from loguru import logger
-from langchain_community.chat_models import ChatOllama
+from langchain_ollama import ChatOllama
 from langchain_community.llms import LlamaCpp
 from langchain_openai import ChatOpenAI
 from src.provider.constants import LLMProviderType
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 import ollama
+import os
 
 DEFAULT_TEMPERATURE = 0.6
 
@@ -13,6 +15,12 @@ class LLMProvider(ABC):
     def __init__(self, base_url="http://localhost:11434"):
         """Initialize the default LLM model."""
         self.llm = ChatOpenAI(base_url=base_url, temperature=0.6, api_key=None)
+        self.model_map: dict = {
+            LLMProviderType.OPENAI.value: LLMOpenAI,
+            LLMProviderType.LLAMA_CPP.value: LLMLlamaCpp,
+            LLMProviderType.OLLAMA.value: LLMOllama,
+            LLMProviderType.NVIDIA.value: LLMNvidia
+        }
 
     def generate_response(self, prompt, images=None):
         text = ""
@@ -34,31 +42,30 @@ class LLMProvider(ABC):
     @staticmethod
     def instantiate(provider_type, llm_config):
         """Create LLM provider."""
-        if provider_type == LLMProviderType.OLLAMA.value:
-            llm_provider = LLMOllama(base_url=llm_config["base_url"], model=llm_config["model"])
-        elif provider_type == LLMProviderType.LLAMA_CPP.value:
-            llm_provider = LLMLlamaCpp(base_url=llm_config["base_url"], model=llm_config["model"])
-        elif provider_type == LLMProviderType.OPENAI.value:
-            llm_provider = LLMOpenAI(base_url=llm_config["base_url"], model=llm_config["model"])
-        else:
-            raise ValueError(f"Unsupported LLM provider type: {provider_type}")
-        
+        llm_provider_class = ModelMap().get(provider_type)
+        assert llm_provider_class is not None, f"Unsupported LLM provider type: {provider_type}"
+
+        print(f"llm_provider_class: {llm_provider_class}")
+        llm_provider = globals()[llm_provider_class](llm_config)
+        assert llm_provider is not None, f"Unsupported LLM provider type: {provider_type}"
         return llm_provider
     
 
 class LLMOllama(LLMProvider):
     """The Ollama LLM model."""
-    def __init__(self, base_url="http://localhost:11434", model=None, temperature=DEFAULT_TEMPERATURE):
+    def __init__(self, llm_config):
         """Initialize the LLM model."""
         self.type = LLMProviderType.OLLAMA
-        self.base_url = base_url
+        self.base_url = llm_config["base_url"]
+        self.model = llm_config["model"]
+        self.temperature = llm_config["temperature"]
         models_list = self.get_models_list()
-        if model is None:
+        if self.model is None:
             logger.info(f"Setting up default model {models_list[0]}")
-            self.llm = ChatOllama(model=models_list[0], base_url=base_url, temperature=temperature)   
+            self.llm = ChatOllama(model=models_list[0], base_url=self.base_url, temperature=self.temperature)   
         else:
-            logger.info(f"Setting up model from session state for model {model}")
-            self.llm = ChatOllama(model=model, base_url=base_url, temperature=temperature)
+            logger.info(f"Setting up model from session state for model {self.model}")
+            self.llm = ChatOllama(model=self.model, base_url=self.base_url, temperature=self.temperature)
 
     def set_model(self, model):
         """Set the model."""
@@ -71,24 +78,50 @@ class LLMOllama(LLMProvider):
         model_list = []
         client = ollama.Client(host=self.base_url)
         response = client.list()
-        # logger.info(f"Response: {response}")
+        # logger.debug(f"Response: {response}")
 
         models = response["models"]
         for model in models:
-            model_list.append(model["name"])
+            model_list.append(model["model"])
 
         return model_list
     
 class LLMLlamaCpp(LLMProvider):
     """The Llama.cpp LLM model."""
-    def __init__(self, base_url="http://localhost:8080"):
+    def __init__(self, llm_config):
         """Initialize the LLM model."""
-        self.type = LLProviderType.LLAMA_CPP
-        self.llm = ChatOpenAI(base_url=base_url, temperature=0.6, api_key=None)
+        self.type = LLMProviderType.LLAMA_CPP
+        self.llm = ChatOpenAI(base_url=llm_config["base_url"], temperature=llm_config["temperature"], api_key=llm_config["api_key"])
 
 class LLMOpenAI(LLMProvider):
     """The Llama.cpp LLM model."""
-    def __init__(self, base_url="http://localhost:8080"):
+    def __init__(self, llm_config):
         """Initialize the LLM model."""
-        self.type = LLProviderType.OPENAI
-        self.llm = ChatOpenAI(base_url=base_url, temperature=0.6, api_key=None)
+        self.type = LLMProviderType.OPENAI
+        self.llm = ChatOpenAI(base_url=llm_config["base_url"], temperature=llm_config["temperature"], api_key=llm_config["api_key"])
+
+class LLMNvidia(LLMProvider):
+    """The Nvidia LLM model."""
+    def __init__(self, llm_config):
+        """Initialize the LLM model."""
+        os.environ["NVIDIA_API_KEY"] = llm_config["api_key"]
+        self.type = LLMProviderType.NVIDIA
+        self.llm = ChatNVIDIA(model=llm_config["model"])
+
+    def get_models_list(self):
+        return super().get_models_list()
+
+
+class ModelMap():
+    """Map of LLM provider types to their respective classes."""
+    def __init__(self):
+        self.map = {
+            LLMProviderType.OPENAI.value: "LLMOpenAI",
+            LLMProviderType.LLAMA_CPP.value: "LLMLlamaCpp",
+            LLMProviderType.OLLAMA.value: "LLMOllama",
+            LLMProviderType.NVIDIA.value: "LLMNvidia"
+        }
+
+    def get(self, provider_type):
+        """Get the model class based on the provider type."""
+        return self.map.get(provider_type, None)

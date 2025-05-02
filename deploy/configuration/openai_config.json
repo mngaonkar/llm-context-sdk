@@ -2,6 +2,6 @@
             "config_type": "llm_provider",
             "provider_name": "openai",
             "model": "gpt-3.5",
-            "base_url": "http://localhost:11434",
+            "base_url": "http://10.0.0.147:8000",
             "temperature": 0.6
 }

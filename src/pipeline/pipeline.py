@@ -9,11 +9,8 @@ from src.pipeline.utils import pretty_print_docs
 from src.pipeline.constants import *
 import logging
 from langchain.callbacks.tracers import ConsoleCallbackHandler
-from langchain.retrievers.document_compressors import FlashrankRerank
 from langchain.retrievers import ContextualCompressionRetriever
 
-from langchain.retrievers.document_compressors.cross_encoder_rerank import CrossEncoderReranker
-from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from src.database.vectorstore import VectorStore
 from src.provider.llm_provider import LLMProvider
 from src.provider.constants import LLMProviderType
@@ -74,7 +71,11 @@ class Pipeline():
         config = LLMProviderConfig(CONFIG_DB)
         llm_config = config.get_llm_provider_config(provider_type)[0]
 
-        self.llm_provider = LLMProvider.instantiate(provider_type, llm_config)
+        try:
+            self.llm_provider = LLMProvider.instantiate(provider_type, llm_config)
+        except Exception as e:
+            logger.error(f"Error setting up LLM provider: {e}")
+            raise e
 
     def setup(self):
         """Overall setup."""
@@ -158,6 +159,13 @@ class Pipeline():
 
             if image is not None:
                 content_parts.append(image_part)
+                text_part = {"type": "text", "text": data["history"] + " " + text}
+            else:
+                if "context" in data["text"]:
+                    text_part = {"type": "text", "text": data["history"] + " " + context + " " + text}
+                else:
+                    text_part = {"type": "text", "text": data["history"] + " " + text}
+            
             content_parts.append(text_part)
 
             return [HumanMessage(content=content_parts)]

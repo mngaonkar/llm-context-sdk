@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from src.pipeline.pipeline import Pipeline
 from src.configuration.configdb import ConfigDB
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,14 +25,21 @@ app = FastAPI(
 # Setup config DB. TODO: refactor, read from file and configure
 CONFIG_DB_PATH = "./deploy/configuration"
 CONFIG_DB_NAME = "config.db"
-CONFIG_FILES = ["dataset_config.json", "pipeline_config.json", "ollama_config.json"]
 
 db = ConfigDB()
-db.setup(CONFIG_DB_PATH, CONFIG_DB_NAME, CONFIG_FILES)
+# Get all files in the directory
+config_files = [f for f in os.listdir(CONFIG_DB_PATH) if os.path.isfile(os.path.join(CONFIG_DB_PATH, f)) and f.endswith(".json")]
+logger.info(f"Config files found: {config_files}")
+assert len(config_files) > 0, "No config files found in the configuration directory"
+
+db.setup(CONFIG_DB_PATH, CONFIG_DB_NAME, config_files)
 
 # Initialize the pipeline
 pipeline = Pipeline()
-pipeline.setup()
+try:
+    pipeline.setup()
+except Exception as e:
+    logger.error(f"Error initializing pipeline: {e}")
 
 @app.get("/")
 def read_root():
