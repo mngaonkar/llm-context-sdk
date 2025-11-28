@@ -12,7 +12,7 @@
 ## Installation
 
 ```bash
-pip install llm-context-sdk
+pip install -r requirements.txt
 ```
 
 ## Configuration
