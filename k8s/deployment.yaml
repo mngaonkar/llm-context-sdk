@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-context-sdk
+  labels:
+    app: llm-context-sdk
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: llm-context-sdk
+  template:
+    metadata:
+      labels:
+        app: llm-context-sdk
+    spec:
+      containers:
+      - name: llm-context-sdk
+        image: llm-context-sdk:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/deploy/configuration
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: llm-context-sdk-config
+      restartPolicy: Always

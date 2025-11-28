@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-context-sdk-config
+  labels:
+    app: llm-context-sdk
+data:
+  dataset_config.json: |
+    {}
+  llama_cpp_config.json: |
+    {}
+  nvidia_config.json: |
+    {}
+  ollama_config.json: |
+    {}
+  openai_config.json: |
+    {}
+  pipeline_config.json: |
+    {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-context-sdk-db
+  labels:
+    app: llm-context-sdk
+binaryData:
+  config.db: ""
