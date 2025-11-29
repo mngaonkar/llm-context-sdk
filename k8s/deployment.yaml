@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: llm-context-sdk
-        image: llm-context-sdk:latest
+        image: mngaonkar/llm-context-sdk:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
