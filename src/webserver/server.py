@@ -5,7 +5,7 @@ from src.pipeline.pipeline import Pipeline
 from src.configuration.configdb import ConfigDB
 import logging
 import os
-from src.configuration.constants import CONFIG_DB_PATH, CONFIG_DB_NAME
+from src.configuration.constants import CONFIG_FILES_PATH, CONFIG_DB_PATH, CONFIG_DB_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ app = FastAPI(
 
 db = ConfigDB()
 # Get all files in the directory
-config_files = [f for f in os.listdir(CONFIG_DB_PATH) if os.path.isfile(os.path.join(CONFIG_DB_PATH, f)) and f.endswith(".json")]
+config_files = [f for f in os.listdir(CONFIG_FILES_PATH) if os.path.isfile(os.path.join(CONFIG_DB_PATH, f)) and f.endswith(".json")]
 logger.info(f"Config files found: {config_files}")
 assert len(config_files) > 0, "No config files found in the configuration directory"
 
