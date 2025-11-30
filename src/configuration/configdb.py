@@ -40,7 +40,7 @@ class ConfigDB():
             os.remove(os.path.join(config_db_path, db_name))
 
         # Initialize fresh DB
-        self.db = TinyDB(os.path.join(config_files_path, db_name))
+        self.db = TinyDB(os.path.join(config_db_path, db_name))
 
         for config in config_files:
             file = os.path.join(config_files_path, config)
