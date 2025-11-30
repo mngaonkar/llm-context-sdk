@@ -23,7 +23,7 @@ from langchain_core.messages import HumanMessage
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-CONFIG_DB = "deploy/configuration/config.db"
+CONFIG_DB = "deploy/configuration/configdb/config.db"
 
 class Pipeline():
     """Pipeline class for processing data"""
