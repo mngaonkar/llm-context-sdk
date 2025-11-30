@@ -5,6 +5,7 @@ from src.pipeline.pipeline import Pipeline
 from src.configuration.configdb import ConfigDB
 import logging
 import os
+from src.configuration.constants import CONFIG_DB_PATH, CONFIG_DB_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -21,10 +22,6 @@ app = FastAPI(
     description="API for LLM inference",
     version="0.1",
 )
-
-# Setup config DB. TODO: refactor, read from file and configure
-CONFIG_DB_PATH = "./deploy/configuration"
-CONFIG_DB_NAME = "config.db"
 
 db = ConfigDB()
 # Get all files in the directory

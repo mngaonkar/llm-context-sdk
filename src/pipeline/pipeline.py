@@ -19,11 +19,10 @@ from src.database.dataset_config import DatasetConfig
 from src.database.loader import DocumentLoader
 from src.session.session import Session
 from langchain_core.messages import HumanMessage
+from src.configuration.constants import CONFIG_DB
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
-
-CONFIG_DB = "deploy/configuration/configdb/config.db"
 
 class Pipeline():
     """Pipeline class for processing data"""
