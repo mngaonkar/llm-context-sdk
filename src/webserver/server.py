@@ -25,11 +25,11 @@ app = FastAPI(
 
 db = ConfigDB()
 # Get all files in the directory
-config_files = [f for f in os.listdir(CONFIG_FILES_PATH) if os.path.isfile(os.path.join(CONFIG_DB_PATH, f)) and f.endswith(".json")]
-logger.info(f"Config files found: {config_files}")
+config_files = [f for f in os.listdir(CONFIG_FILES_PATH) if os.path.isfile(os.path.join(CONFIG_FILES_PATH, f)) and f.endswith(".json")]
+logger.info(f"Config files found: {config_files} in {CONFIG_FILES_PATH}")
 assert len(config_files) > 0, "No config files found in the configuration directory"
 
-db.setup(CONFIG_DB_PATH, CONFIG_DB_NAME, config_files)
+db.setup(CONFIG_FILES_PATH, CONFIG_DB_PATH, CONFIG_DB_NAME, config_files)
 
 # Initialize the pipeline
 pipeline = Pipeline()

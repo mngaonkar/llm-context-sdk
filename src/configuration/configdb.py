@@ -33,16 +33,16 @@ class ConfigDB():
         q = Query()
         self.db.remove(q[key_name] == key_value)
 
-    def setup(self, config_db_path: str, db_name:str, config_files: list):
+    def setup(self, config_files_path: str, config_db_path: str, db_name:str, config_files: list):
         """Setup DB from config files"""
         # Check if the config DB exists, if yes delete it
         if os.path.exists(os.path.join(config_db_path, db_name)):
             os.remove(os.path.join(config_db_path, db_name))
 
         # Initialize fresh DB
-        self.db = TinyDB(os.path.join(config_db_path, db_name))
+        self.db = TinyDB(os.path.join(config_files_path, db_name))
 
         for config in config_files:
-            file = os.path.join(config_db_path, config)
+            file = os.path.join(config_files_path, config)
             with open(file, "r") as fp:
                 self.insert_config(json.loads(fp.read()))
