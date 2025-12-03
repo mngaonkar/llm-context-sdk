@@ -1,4 +1,3 @@
-kubectl apply -f - <<EOF
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,7 +9,7 @@ data:
     datasources:
       - name: Prometheus
         type: prometheus
-        url: http://prometheus-server.monitoring.svc.cluster.local:80
+        url: http://prometheus.monitoring.svc.cluster.local:9090 
         access: proxy
         isDefault: true
 ---
@@ -46,12 +45,12 @@ spec:
         - name: datasources
           mountPath: /etc/grafana/provisioning/datasources
         env:
+        - name: GF_USERS_ALLOW_SIGN_UP
+          value: "true"
         - name: GF_AUTH_ANONYMOUS_ENABLED
-          value: "true"
-        - name: GF_AUTH_ANONYMOUS_ORG_ROLE
-          value: Viewer
+          value: "false"
         - name: GF_AUTH_DISABLE_LOGIN_FORM
-          value: "true"
+          value: "false"
         resources:
           limits:
             cpu: "500m"
@@ -79,4 +78,3 @@ spec:
     nodePort: 32000
   selector:
     app: grafana
-EOF

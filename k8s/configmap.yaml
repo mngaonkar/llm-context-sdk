@@ -1,28 +1,73 @@
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: llm-context-sdk-config
-  labels:
-    app: llm-context-sdk
 data:
-  dataset_config.json: |
-    {}
-  llama_cpp_config.json: |
-    {}
+  config.db: '{"_default": {"1": {"config_type": "dataset", "dataset_name": "test_dataset",
+    "dataset_path": "./deploy/datasets", "status": 1}, "2": {"config_type": "pipeline",
+    "pipeline_name": "default", "provider_name": "ollama", "augmented_flag": true,
+    "dataset": "test_dataset"}, "3": {"config_type": "llm_provider", "provider_name":
+    "ollama", "model": "llava", "base_url": "http://10.0.0.147:11434", "temperature":
+    0.6, "template": "{context} {history} {question}", "input_variables": ["history",
+    "context", "question"]}}}'
+  dataset_config.json: |-
+    {
+        "config_type": "dataset",
+        "dataset_name": "test_dataset",
+        "dataset_path": "./deploy/datasets",
+        "status": 1
+    }
+  llama_cpp_config.json: |-
+    {
+                "config_type": "llm_provider",
+                "provider_name": "llama_cpp",
+                "model": "llava",
+                "base_url": "http://localhost:11434",
+                "temperature": 0.6
+    }
   nvidia_config.json: |
-    {}
+    {
+                "config_type": "llm_provider",
+                "provider_name": "nvidia",
+                "model": "deepseek-ai/deepseek-r1-distill-llama-8b",
+                "base_url": "http://10.0.0.147:8000",
+                "api_key": "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",
+                "temperature": 0.6,
+                "template": "{context} {history} {question}",
+                "input_variables": [
+                    "history",
+                    "context",
+                    "question"
+                ]
+    }
   ollama_config.json: |
-    {}
+    {
+                "config_type": "llm_provider",
+                "provider_name": "ollama",
+                "model": "llava",
+                "base_url": "http://10.0.0.64:11434",
+                "temperature": 0.6,
+                "template": "{context} {history} {question}",
+                "input_variables": [
+                    "history",
+                    "context",
+                    "question"
+                ]
+    }
   openai_config.json: |
-    {}
-  pipeline_config.json: |
-    {}
----
-apiVersion: v1
+    {
+                "config_type": "llm_provider",
+                "provider_name": "openai",
+                "model": "gpt-3.5",
+                "base_url": "http://10.0.0.147:8000",
+                "temperature": 0.6
+    }
+  pipeline_config.json: |-
+    {
+        "config_type": "pipeline",
+        "pipeline_name": "default",
+        "provider_name": "ollama",
+        "augmented_flag": true,
+        "dataset": "test_dataset"
+    }
 kind: ConfigMap
 metadata:
-  name: llm-context-sdk-db
-  labels:
-    app: llm-context-sdk
-binaryData:
-  config.db: ""
+  creationTimestamp: null
+  name: llm-context-sdk-config
